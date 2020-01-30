@@ -1,0 +1,34 @@
+{
+  "variables": {
+    "ucloud_public_key": "{{env `UCLOUD_PUBKEY`}}",
+    "ucloud_private_key": "{{env `UCLOUD_SECRET`}}",
+    "ssh_user": "root",
+    "ssh_password": "areallycomplicatedpasswordindeed",
+    "ucloud_project_id": "org-ttq14t",
+    "image_id": "uimage-h2agy0",
+    "region": "cn-sh2",
+    "az": "cn-sh2-02"
+  },
+
+  "builders": [{
+    "type": "ucloud-uhost",
+    "public_key":"{{user `ucloud_public_key`}}",
+    "private_key":"{{user `ucloud_private_key`}}",
+    "project_id": "{{user `ucloud_project_id`}}",
+    "region": "{{user `region`}}",
+    "availability_zone": "{{user `az`}}",
+    "instance_type": "n-basic-2",
+    "source_image_id":"{{user `image_id`}}",
+    "ssh_username":"{{user `ssh_user`}}",
+    "ssh_password": "{{user `ssh_password`}}",
+    "image_name": "nginx"
+  }],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "yum install -y nginx",
+        "systemctl enable nginx.service"
+      ]
+    }]
+}
