@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	host "github.com/lonegunmanb/pulumi-ucloud/sdk/go/ucloud/uhost"
-	lb "github.com/lonegunmanb/pulumi-ucloud/sdk/go/ucloud/ulb"
-	net "github.com/lonegunmanb/pulumi-ucloud/sdk/go/ucloud/unet"
-	vpc "github.com/lonegunmanb/pulumi-ucloud/sdk/go/ucloud/vpc"
+	host "github.com/pulumi/pulumi-ucloud/sdk/go/ucloud/uhost"
+	lb "github.com/pulumi/pulumi-ucloud/sdk/go/ucloud/ulb"
+	net "github.com/pulumi/pulumi-ucloud/sdk/go/ucloud/unet"
+	vpc "github.com/pulumi/pulumi-ucloud/sdk/go/ucloud/vpc"
 	"github.com/pulumi/pulumi/sdk/go/pulumi"
+	"reflect"
 )
 
 func main() {
@@ -72,16 +73,29 @@ func main() {
 			"cn-sh2-02",
 			"cn-sh2-03",
 		}
+		images, err := host.LookupImages(ctx, &host.LookupImagesArgs{
+			ImageType:  "custom",
+			MostRecent: true,
+			NameRegex:  "nginx",
+		})
+		if err != nil {
+			return err
+		}
+
+		is := images.Images.([]interface{})
+		image := is[0].(map[string]interface{})
+		imageId := image["id"].(reflect.Value).Interface().(string)
+
 		var hosts []*host.Instance
 		for i := 0; i < len(az); i++ {
 			instance, err := host.NewInstance(ctx, fmt.Sprintf("pulumi_host%d", i), &host.InstanceArgs{
 				AvailabilityZone: az[i],
 				ChargeType:       "dynamic",
-				ImageId:          "uimage-a22lvudo",
+				ImageId:          imageId,
 				InstanceType:     "n-highcpu-1",
 				Name:             fmt.Sprintf("nginx-%d", i),
 				Remark:           "For Pulumi Test Only",
-				RootPassword:     "areallycomplictedpasswordindeed",
+				RootPassword:     "AreallyComplictedpassw0rd",
 				SubnetId:         subnet.ID(),
 				Tag:              "pulumitest",
 				VpcId:            newVpc.ID(),
