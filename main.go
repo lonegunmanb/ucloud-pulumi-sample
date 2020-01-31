@@ -68,30 +68,23 @@ func main() {
 			return err
 		}
 
+		nginxImgId, err := lookupImageId(ctx, "nginx")
+		if err != nil {
+			return err
+		}
+
 		var az = []string{
 			"cn-sh2-01",
 			"cn-sh2-02",
 			"cn-sh2-03",
 		}
-		images, err := host.LookupImages(ctx, &host.LookupImagesArgs{
-			ImageType:  "custom",
-			MostRecent: true,
-			NameRegex:  "nginx",
-		})
-		if err != nil {
-			return err
-		}
-
-		is := images.Images.([]interface{})
-		image := is[0].(map[string]interface{})
-		imageId := image["id"].(reflect.Value).Interface().(string)
 
 		var hosts []*host.Instance
 		for i := 0; i < len(az); i++ {
 			instance, err := host.NewInstance(ctx, fmt.Sprintf("pulumi_host%d", i), &host.InstanceArgs{
 				AvailabilityZone: az[i],
 				ChargeType:       "dynamic",
-				ImageId:          imageId,
+				ImageId:          nginxImgId,
 				InstanceType:     "n-highcpu-1",
 				Name:             fmt.Sprintf("nginx-%d", i),
 				Remark:           "For Pulumi Test Only",
@@ -129,4 +122,20 @@ func main() {
 		ctx.Export("public_ip", eip.PublicIp())
 		return nil
 	})
+}
+
+func lookupImageId(ctx *pulumi.Context, imgNameRegex string) (string, error) {
+	images, err := host.LookupImages(ctx, &host.LookupImagesArgs{
+		ImageType:  "custom",
+		MostRecent: true,
+		NameRegex:  imgNameRegex,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	imageResults := images.Images.([]interface{})
+	nginxImg := imageResults[0].(map[string]interface{})
+	nginxImgId := nginxImg["id"].(reflect.Value).Interface().(string)
+	return nginxImgId, nil
 }
