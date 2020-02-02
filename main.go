@@ -7,26 +7,25 @@ import (
 	net "github.com/pulumi/pulumi-ucloud/sdk/go/ucloud/unet"
 	vpc "github.com/pulumi/pulumi-ucloud/sdk/go/ucloud/vpc"
 	"github.com/pulumi/pulumi/sdk/go/pulumi"
-	"reflect"
 )
 
 func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
 		newVpc, err := vpc.NewVpc(ctx, "pulumi_test_vpc", &vpc.VpcArgs{
-			CidrBlocks: []string{"10.0.0.0/16"},
-			Name:       "pulumi_test",
-			Remark:     "For Pulumi Test Only",
-			Tag:        "pulumitest",
+			CidrBlocks: pulumi.StringArray{pulumi.String("10.0.0.0/16")},
+			Name:       pulumi.String("pulumi_test"),
+			Remark:     pulumi.String("For Pulumi Test Only"),
+			Tag:        pulumi.String("pulumitest"),
 		})
 		if err != nil {
 			return err
 		}
 
 		subnet, err := vpc.NewSubnet(ctx, "pului_test_subnet", &vpc.SubnetArgs{
-			CidrBlock: "10.0.0.0/24",
-			Name:      "pulumi_test_subnet",
-			Remark:    "For Pulumi Test Only",
-			Tag:       "pulumitest",
+			CidrBlock: pulumi.String("10.0.0.0/24"),
+			Name:      pulumi.String("pulumi_test_subnet"),
+			Remark:    pulumi.String("For Pulumi Test Only"),
+			Tag:       pulumi.String("pulumitest"),
 			VpcId:     newVpc.ID(),
 		})
 		if err != nil {
@@ -34,24 +33,24 @@ func main() {
 		}
 
 		eip, err := net.NewEip(ctx, "ulb_eip", &net.EipArgs{
-			Bandwidth:    200,
-			ChargeMode:   "traffic",
-			InternetType: "bgp",
-			Name:         "pulumi_test_eip",
-			Remark:       "For Pulumi Test Only",
-			Tag:          "pulumitest",
+			Bandwidth:    pulumi.Int(200),
+			ChargeMode:   pulumi.String("traffic"),
+			InternetType: pulumi.String("bgp"),
+			Name:         pulumi.String("pulumi_test_eip"),
+			Remark:       pulumi.String("For Pulumi Test Only"),
+			Tag:          pulumi.String("pulumitest"),
 		})
 		if err != nil {
 			return err
 		}
 
 		newLb, err := lb.NewLb(ctx, "publiculb", &lb.LbArgs{
-			ChargeType: "dynamic",
-			Internal:   false,
-			Name:       "pulumitestlb",
-			Remark:     "ForPulumiTestOnly",
+			ChargeType: pulumi.String("dynamic"),
+			Internal:   pulumi.Bool(false),
+			Name:       pulumi.String("pulumitestlb"),
+			Remark:     pulumi.String("ForPulumiTestOnly"),
 			SubnetId:   subnet.ID(),
-			Tag:        "pulumitest",
+			Tag:        pulumi.String("pulumitest"),
 			VpcId:      newVpc.ID(),
 		})
 		if err != nil {
@@ -61,8 +60,8 @@ func main() {
 		listener, err := lb.NewLbListener(ctx, "nginx", &lb.LbListenerArgs{
 			ListenType:     nil,
 			LoadBalancerId: newLb.ID(),
-			Port:           8080,
-			Protocol:       "tcp",
+			Port:           pulumi.Int(8080),
+			Protocol:       pulumi.String("tcp"),
 		})
 		if err != nil {
 			return err
@@ -82,15 +81,15 @@ func main() {
 		var hosts []*host.Instance
 		for i := 0; i < len(az); i++ {
 			instance, err := host.NewInstance(ctx, fmt.Sprintf("pulumi_host%d", i), &host.InstanceArgs{
-				AvailabilityZone: az[i],
-				ChargeType:       "dynamic",
-				ImageId:          nginxImgId,
-				InstanceType:     "n-highcpu-1",
-				Name:             fmt.Sprintf("nginx-%d", i),
-				Remark:           "For Pulumi Test Only",
-				RootPassword:     "AreallyComplictedpassw0rd",
+				AvailabilityZone: pulumi.String(az[i]),
+				ChargeType:       pulumi.String("dynamic"),
+				ImageId:          pulumi.String(nginxImgId),
+				InstanceType:     pulumi.String("n-highcpu-1"),
+				Name:             pulumi.String(fmt.Sprintf("nginx-%d", i)),
+				Remark:           pulumi.String("For Pulumi Test Only"),
+				RootPassword:     pulumi.String("AreallyComplictedpassw0rd"),
 				SubnetId:         subnet.ID(),
-				Tag:              "pulumitest",
+				Tag:              pulumi.String("pulumitest"),
 				VpcId:            newVpc.ID(),
 			})
 			if err != nil {
@@ -103,7 +102,7 @@ func main() {
 			_, err := lb.NewLbAttachment(ctx, fmt.Sprintf("nginx-%d", i), &lb.LbAttachmentArgs{
 				ListenerId:     listener.ID(),
 				LoadBalancerId: newLb.ID(),
-				Port:           80,
+				Port:           pulumi.Int(80),
 				ResourceId:     hosts[i].ID(),
 			})
 			if err != nil {
@@ -119,23 +118,30 @@ func main() {
 			return err
 		}
 
-		ctx.Export("public_ip", eip.PublicIp())
+		ctx.Export("public_ip", eip.PublicIp)
 		return nil
 	})
 }
 
 func lookupImageId(ctx *pulumi.Context, imgNameRegex string) (string, error) {
 	images, err := host.LookupImages(ctx, &host.LookupImagesArgs{
-		ImageType:  "custom",
-		MostRecent: true,
-		NameRegex:  imgNameRegex,
+		ImageType:  String("custom"),
+		MostRecent: Bool(true),
+		NameRegex:  String(imgNameRegex),
 	})
 	if err != nil {
 		return "", err
 	}
 
-	imageResults := images.Images.([]interface{})
-	nginxImg := imageResults[0].(map[string]interface{})
-	nginxImgId := nginxImg["id"].(reflect.Value).Interface().(string)
+	imageResults := images.Images
+	nginxImgId := imageResults[0].Id
 	return nginxImgId, nil
+}
+
+func String(s string) *string {
+	return &s
+}
+
+func Bool(b bool) *bool {
+	return &b
 }
