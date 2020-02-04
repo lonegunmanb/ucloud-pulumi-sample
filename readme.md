@@ -1,6 +1,6 @@
 # UCloud Pulumi Sample Go
 
-To run this sample, you need a UCloud account and a Pulumi account first, and Pulumi client [should be installed](https://www.pulumi.com/docs/get-started/install/).
+To run this sample, you need a UCloud account and a Pulumi account first, and Pulumi client [should be installed](https://www.pulumi.com/docs/get-started/install/), Hashicorp Packer [should be installed](https://packer.io/downloads.html).
 
 Then, compile main.go first:
 
@@ -22,6 +22,12 @@ Then let's create a new-empty stack:
 
 ```bash
 pulumi stack init <STACK_NAME_HERE>
+```
+
+Before we create a new stack, we **must** create a new UCloud nginx image:
+
+```bash
+packer build nginx.json
 ```
 
 Now we can create a new stack by executing pulumi up:

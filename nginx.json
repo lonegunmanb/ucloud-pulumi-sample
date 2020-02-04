@@ -1,10 +1,10 @@
 {
   "variables": {
-    "ucloud_public_key": "{{env `UCLOUD_PUBKEY`}}",
-    "ucloud_private_key": "{{env `UCLOUD_SECRET`}}",
+    "ucloud_public_key": "{{env `UCLOUD_PUBLIC_KEY`}}",
+    "ucloud_private_key": "{{env `UCLOUD_PRIVATE_KEY`}}",
     "ssh_user": "root",
     "ssh_password": "areallycomplicatedpasswordindeed",
-    "ucloud_project_id": "org-ttq14t",
+    "ucloud_project_id": "{{env `UCLOUD_PROJECT_ID`}}",
     "image_id": "uimage-h2agy0",
     "region": "cn-sh2",
     "az": "cn-sh2-02"
